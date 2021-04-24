@@ -6,8 +6,9 @@ public class Main
 {
     public static void main(String[] args)
     {
-      String text="I like it, i'm not gonna crack.";
-      TreeMap<Character,Integer> freq=freq(text);
+        Reader reader=new Reader();
+        String text=reader.Reader();;
+        TreeMap<Character,Integer> freq=freq(text);
         System.out.println(text);
         System.out.println(freq);
 
