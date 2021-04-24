@@ -1,17 +1,16 @@
 package com.company;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.TreeMap;
 public class Main
 {
-    public static void main(String[] args)
-    {
-        Reader reader=new Reader();
-        String text=reader.Reader();;
+    public static void main(String[] args) throws IOException {
+        FileManager fileManager=new FileManager();
+        String text=fileManager.Reader();
         TreeMap<Character,Integer> freq=freq(text);
         System.out.println(text);
         System.out.println(freq);
-
       ArrayList<CodeTree> codeTreeArrayList=new ArrayList<>();
       for(Character c:freq.keySet())//перебор всех с в freq
       {
@@ -34,6 +33,7 @@ public class Main
         System.out.println("Размер исходной строки: " + text.getBytes().length * 8 + " бит");
         System.out.println("Размер сжатой строки: " + encoded.length() + " бит");
         System.out.println("Расшифровка:"+decoder(encoded.toString(),tree));
+        fileManager.Writer(encoded);
     }
 
     //Нахождение частот каждого символа
