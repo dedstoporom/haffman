@@ -1,13 +1,17 @@
 package com.company;
-import java.io.IOException;
+import sun.security.util.BitArray;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Map;
 import java.util.TreeMap;
 public class Main
 {
     public static void main(String[] args) throws IOException {
         FileManager fileManager=new FileManager();
         String text=fileManager.Reader();
+        File file = new File("CodeText.huf");
         TreeMap<Character,Integer> freq=freq(text);
         System.out.println(text);
         System.out.println(freq);
@@ -30,10 +34,12 @@ public class Main
         {
             encoded.append(CodeMap.get(text.charAt(i)));
         }
+//        System.out.println(encoded);
         System.out.println("Размер исходной строки: " + text.getBytes().length * 8 + " бит");
         System.out.println("Размер сжатой строки: " + encoded.length() + " бит");
         System.out.println("Расшифровка:"+decoder(encoded.toString(),tree));
         fileManager.Writer(encoded);
+        saveToFile(file, freq, encoded.toString());
     }
 
     //Нахождение частот каждого символа
@@ -53,7 +59,7 @@ public class Main
         }
         return freqmap;
     }
-    //сортировка по Хаффману.Объединение элементов и создание parent для них
+    //сортировка по Хаффману.Объединение элементов
     private static CodeTree huffman(ArrayList<CodeTree> codeTreeArrayList)
     {
         while (codeTreeArrayList.size() > 1)//удаляет,совмещает и добавляет
@@ -132,5 +138,93 @@ public class Main
         }
 
     }
+    ////////////////////////////////////////////////////////////////////////////
+    public static class BitArray {
+        int size;
+        byte[] bytes;
+
+        private byte[] masks = new byte[] {0b00000001, 0b00000010, 0b00000100, 0b00001000,
+                0b00010000, 0b00100000, 0b01000000, (byte) 0b10000000};
+
+        public BitArray(int size) {
+            this.size = size;
+            int sizeInBytes = size / 8;
+            if (size % 8 > 0) {
+                sizeInBytes = sizeInBytes + 1;
+            }
+            bytes = new byte[sizeInBytes];
+        }
+
+        public BitArray(int size, byte[] bytes) {
+            this.size = size;
+            this.bytes = bytes;
+        }
+
+        public int get(int index) {
+            int byteIndex = index / 8;
+            int bitIndex = index % 8;
+            return (bytes[byteIndex] & masks[bitIndex]) != 0 ? 1 : 0;
+        }
+
+        public void set(int index, int value) {
+            int byteIndex = index / 8;
+            int bitIndex = index % 8;
+            if (value != 0) {
+                bytes[byteIndex] = (byte) (bytes[byteIndex] | masks[bitIndex]);
+            } else {
+                bytes[byteIndex] = (byte) (bytes[byteIndex] & ~masks[bitIndex]);
+            }
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < size; i++) {
+                sb.append(get(i) > 0 ? '1' : '0');
+            }
+            return sb.toString();
+        }
+
+        public int getSize() {
+            return size;
+        }
+
+        public int getSizeInBytes() {
+            return bytes.length;
+        }
+
+        public byte[] getBytes() {
+            return bytes;
+        }
+    }
+
+    // сохранение таблицы частот и сжатой информации в файл
+    private static void saveToFile(File output, Map<Character, Integer> freq, String bits)
+    {
+        try {
+            DataOutputStream os = new DataOutputStream(new FileOutputStream(output));
+            os.writeInt(freq.size());
+            for (Character character: freq.keySet()) {
+                os.writeChar(character);
+                os.writeInt(freq.get(character));
+            }
+            int compressedSizeBits = bits.length();
+            BitArray bitArray = new BitArray(compressedSizeBits);
+            for (int i = 0; i < bits.length(); i++) {
+                bitArray.set(i, bits.charAt(i) != '0' ? 1 : 0);
+            }
+
+            os.writeInt(compressedSizeBits);
+            os.write(bitArray.bytes, 0, bitArray.getSizeInBytes());
+            os.flush();
+            os.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
 
